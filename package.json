@@ -1,0 +1,26 @@
+{
+  "name": "mqttbroker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Acceptedlc/mqttBroker.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Acceptedlc/mqttBroker/issues"
+  },
+  "homepage": "https://github.com/Acceptedlc/mqttBroker#readme",
+  "dependencies": {
+    "mqtt-connection": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^10.3.5",
+    "ts-node": "^7.0.0"
+  }
+}
