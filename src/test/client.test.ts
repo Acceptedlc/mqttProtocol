@@ -11,16 +11,18 @@ describe("ClientSocket", async function() {
   this.timeout(1000 * 100);
   before(async function() {
      server = new net.Server();
-     server.on('connection', function (stream) {
-       let temp: MqttServerSocket = new MqttServerSocket(stream);
-       temp.init();
+     server.on('connection', async function (stream) {
+       let temp: MqttServerSocket = new MqttServerSocket();
+       await temp.init(stream);
+       console.log(temp.clientId);
      });
     server.listen(port)
   });
 
 
   it("connect", async function() {
-    client = new MqttClientSocket(ip, port, "sdfdsfdsf");
+    client = new MqttClientSocket(ip, port, "sdfdsfdsf", {keepalive: 5});
     await client.connect();
   });
+
 });

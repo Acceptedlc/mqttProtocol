@@ -1,4 +1,5 @@
 import {MqttBaseSocket} from "./mqttbasesocket";
+import * as _ from "lodash";
 import * as net from "net";
 
 const mqttCon = require('mqtt-connection');
@@ -10,6 +11,7 @@ export class MqttClientSocket extends MqttBaseSocket{
     this.port = port;
     this.clientId = clientId;
     this.opts = opts;
+    this.timers = [];
   }
 
   async connect(): Promise<void> {
@@ -26,13 +28,18 @@ export class MqttClientSocket extends MqttBaseSocket{
       connectFail = fail;
     });
 
-    let timeoutId: NodeJS.Timer = setTimeout(
-      () => connectFail(new Error(`mqttClientSocket connect timeout: ip=${this.ip}, port=${this.port}`)),
-      this.opts.keepalive
-    );
+   this.addTimer(
+       this.opts.keepalive,
+       () => connectFail(new Error(`mqttClientSocket connect timeout: ip=${this.ip}, port=${this.port}`))
+   );
 
-    this.socket_.on("connack", function(packet: any) {
-      clearTimeout(timeoutId);
+    this.socket_.on("connack", (packet: any) => {
+      if(packet.returnCode !== 0) {
+        connectFail(new Error(`mqttClientSocket connect refuse: returnCode=${packet.returnCode}`));
+        this.clearTimers();
+        return;
+      }
+      this.clearTimers();
       connectSuc();
     });
 
@@ -43,6 +50,8 @@ export class MqttClientSocket extends MqttBaseSocket{
   private readonly port: number;
   private readonly opts: MqttClientSocketOptions;
   private readonly clientId: string;
+
+
 }
 
 export interface MqttClientSocketOptions {

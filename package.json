@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/Acceptedlc/mqttBroker#readme",
   "dependencies": {
+    "lodash": "^4.17.10",
     "mqtt-connection": "^4.0.0"
   },
   "devDependencies": {
