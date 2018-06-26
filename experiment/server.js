@@ -16,7 +16,7 @@ server.on('connection', function (stream) {
     client.on('publish', function (packet) {
         // send a puback with messageId (for QoS > 0)
         client.puback({ messageId: packet.messageId })
-    })
+    });
 
     // client pinged
     client.on('pingreq', function () {

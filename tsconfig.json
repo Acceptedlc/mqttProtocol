@@ -10,8 +10,8 @@
     ],
     "sourceMap": true,
     "declaration": true,
-    "declarationDir": "./dist/declaration",
-    "outDir": "./dist"
+    "declarationDir": "./lib/definitions",
+    "outDir": "./lib"
   },
   "include": [
     "src/**/*"
