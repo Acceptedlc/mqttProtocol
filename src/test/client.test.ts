@@ -14,7 +14,6 @@ describe("ClientSocket", async function() {
      server.on('connection', async function (stream) {
        let temp: MqttServerSocket = new MqttServerSocket();
        await temp.init(stream);
-       console.log(temp.clientId);
      });
     server.listen(port)
   });

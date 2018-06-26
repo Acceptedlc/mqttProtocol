@@ -23,12 +23,12 @@ export class MqttBaseSocket extends EventEmitter {
     this.timers.push(setTimeout(timeoutFunction, second * 1000));
   }
 
-  protected disConnect(): void {
+  protected disConnect(e?: Error): void {
     if(_.isObject(this.socket_)) {
       this.clearTimers();
       this.socket_.destroy();
       this.socket_ = null;
-      this.emit("close");
+      this.emit("close", e);
     }
   }
 }

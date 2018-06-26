@@ -30,12 +30,17 @@ export class MqttClientSocket extends MqttBaseSocket{
 
    this.addTimer(
        this.opts.keepalive,
-       () => connectFail(new Error(`mqttClientSocket connect timeout: ip=${this.ip}, port=${this.port}`))
+       () => {
+         this.disConnect();
+         connectFail(new Error(`mqttClientSocket connect timeout: ip=${this.ip}, port=${this.port}`));
+       }
    );
+
 
     this.socket_.on("connack", (packet: any) => {
       if(packet.returnCode !== 0) {
         connectFail(new Error(`mqttClientSocket connect refuse: returnCode=${packet.returnCode}`));
+        this.disConnect();
         this.clearTimers();
         return;
       }
