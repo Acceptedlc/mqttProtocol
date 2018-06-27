@@ -1,5 +1,4 @@
 import {MqttBaseSocket} from "./mqttbasesocket";
-import * as _ from "lodash";
 import * as net from "net";
 
 const mqttCon = require('mqtt-connection');
@@ -42,13 +41,15 @@ export class MqttClientSocket extends MqttBaseSocket {
         this.clearTimers();
         return;
       }
-      this.clearTimers();
+      this.clearTimerByName(TimerName.WaitConnect);
       connectSuc();
     });
 
     this.socket_.on("publish", this.onPublish.bind(this));
-    this.socket_.on("disconnect", this.disConnect.bind(this));
     this.socket_.on("pingresp", this.onPingresp.bind(this));
+    this.socket_.on("disconnect", this.disConnect.bind(this, new Error("MqttClientSocket disconnect")));
+    this.socket_.on('close',  this.disConnect.bind(this, new Error("MqttClientSocket close")));
+    this.socket_.on('error',  this.disConnect.bind(this, new Error("MqttClientSocket error")));
     this.pingreq();
     await waiter;
   }
@@ -69,7 +70,7 @@ export class MqttClientSocket extends MqttBaseSocket {
 
   private onPingresp() {
     this.clearTimerByName(TimerName.WaitPingresp);
-    this.pingreq();
+    this.addTimer(TimerName.NextPing, this.opts.keepalive, this.pingreq.bind(this));
   }
 }
 
@@ -79,5 +80,6 @@ export interface MqttClientSocketOptions {
 
 enum TimerName {
   WaitConnect =  "WaitConnect",
-  WaitPingresp = "WaitPingresp"
+  WaitPingresp = "WaitPingresp",
+  NextPing = "NextPing"
 }

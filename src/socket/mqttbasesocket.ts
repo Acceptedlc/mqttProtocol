@@ -15,8 +15,9 @@ export class MqttBaseSocket extends EventEmitter {
   protected timers: any;
 
   protected clearTimers(): void {
-    for(let timer of this.timers) {
-      clearTimeout(timer);
+    for(let key in this.timers) {
+      clearTimeout(this.timers[key]);
+      delete this.timers[key];
     }
   }
 
@@ -25,17 +26,18 @@ export class MqttBaseSocket extends EventEmitter {
   }
 
   protected addTimer(name: string, second: number, timeoutFunction: any): void {
-    if(this.timers[name]) {
+    if (this.timers[name]) {
       clearTimeout(this.timers[name]);
-    }this.timers[name] = setTimeout(timeoutFunction, second * 1000);
+    }
+    this.timers[name] = setTimeout(timeoutFunction, second * 1000);
   }
 
-  protected disConnect(e?: Error): void {
-    if(_.isObject(this.socket_)) {
-      this.clearTimers();
+  public disConnect(e?: Error): void {
+    this.clearTimers();
+    this.emit("close", e);
+    if (_.isObject(this.socket_)) {
       this.socket_.destroy();
       this.socket_ = null;
-      this.emit("close", e);
     }
   }
 
