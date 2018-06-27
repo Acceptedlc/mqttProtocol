@@ -14,6 +14,9 @@ describe("ClientSocket", async function() {
      server.on('connection', async function (stream) {
        let temp: MqttServerSocket = new MqttServerSocket();
        await temp.init(stream);
+       temp.on("publish",(topic: string, payload: string ) => {
+         console.log(payload);
+       })
      });
     server.listen(port)
   });
@@ -22,6 +25,7 @@ describe("ClientSocket", async function() {
   it("connect", async function() {
     client = new MqttClientSocket(ip, port, "sdfdsfdsf", {keepalive: 5});
     await client.connect();
+    client.publish("sdfdsf");
   });
 
 });

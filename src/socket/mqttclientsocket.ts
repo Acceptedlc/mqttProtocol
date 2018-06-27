@@ -4,7 +4,7 @@ import * as net from "net";
 
 const mqttCon = require('mqtt-connection');
 
-export class MqttClientSocket extends MqttBaseSocket{
+export class MqttClientSocket extends MqttBaseSocket {
   constructor(ip: string, port: number, clientId: string, opts: MqttClientSocketOptions = {keepalive: 30}) {
     super();
     this.ip = ip;
@@ -28,17 +28,15 @@ export class MqttClientSocket extends MqttBaseSocket{
       connectFail = fail;
     });
 
-   this.addTimer(
-       this.opts.keepalive,
-       () => {
-         this.disConnect();
-         connectFail(new Error(`mqttClientSocket connect timeout: ip=${this.ip}, port=${this.port}`));
-       }
-   );
+
+    this.addTimer(TimerName.WaitConnect, 5, () => {
+      this.disConnect();
+      connectFail(new Error(`mqttClientSocket connect timeout: ip=${this.ip}, port=${this.port}`));
+    });
 
 
     this.socket_.on("connack", (packet: any) => {
-      if(packet.returnCode !== 0) {
+      if (packet.returnCode !== 0) {
         connectFail(new Error(`mqttClientSocket connect refuse: returnCode=${packet.returnCode}`));
         this.disConnect();
         this.clearTimers();
@@ -48,6 +46,10 @@ export class MqttClientSocket extends MqttBaseSocket{
       connectSuc();
     });
 
+    this.socket_.on("publish", this.onPublish.bind(this));
+    this.socket_.on("disconnect", this.disConnect.bind(this));
+    this.socket_.on("pingresp", this.onPingresp.bind(this));
+    this.pingreq();
     await waiter;
   }
 
@@ -56,9 +58,26 @@ export class MqttClientSocket extends MqttBaseSocket{
   private readonly opts: MqttClientSocketOptions;
   private readonly clientId: string;
 
+  private pingreq() {
+    this.socket_.pingreq();
+    this.addTimer(
+      TimerName.WaitPingresp,
+      this.opts.keepalive,
+      () => this.disConnect(new Error("MqttClientSocket pinresp timeout"))
+    )
+  }
 
+  private onPingresp() {
+    this.clearTimerByName(TimerName.WaitPingresp);
+    this.pingreq();
+  }
 }
 
 export interface MqttClientSocketOptions {
   keepalive: number; //default 30s
+}
+
+enum TimerName {
+  WaitConnect =  "WaitConnect",
+  WaitPingresp = "WaitPingresp"
 }

@@ -11,6 +11,8 @@
 * message 
 	* close socket关闭
 * clientId 属性 这个socket的唯一表示
+* publish
+	* 
 
 	
 	
