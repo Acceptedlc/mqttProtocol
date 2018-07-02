@@ -2,7 +2,8 @@
   "name": "mqttProtocol",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "./lib/index.js",
+  "types": "./lib/definitions/index.d.ts",
   "scripts": {
     "compile": "rm -rf lib; tsc",
     "test": "npm run compile; mocha ./lib/test/**/*.js"
