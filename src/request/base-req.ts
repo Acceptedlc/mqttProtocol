@@ -1,6 +1,6 @@
 export abstract class BaseReq {
   protected status: number;
-  protected cb: (err: Error, data: string)=> void;
+  protected cb: (err: Error, data: string) => void;
   protected timer: NodeJS.Timer;
 
   constructor() {
@@ -8,13 +8,22 @@ export abstract class BaseReq {
   }
 
   protected clearTimer() {
-    if(this.timer) {
+    if (this.timer) {
       clearTimeout(this.timer);
     }
   }
 
+  protected onTimeout(): void {
+    this.cancle();
+  }
+
   public getStatus(): RequestStatus {
     return this.status;
+  }
+
+  public cancle(): void {
+    this.clearTimer();
+    this.status = RequestStatus.Fail;
   }
 }
 

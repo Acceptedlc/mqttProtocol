@@ -1,3 +1,5 @@
+import {MqttServerSocket} from "../socket/mqtt-server-socket";
+
 const net = require('net');
 const port: number = 5555;
 const ip: string = "localhost";
@@ -5,7 +7,8 @@ const ip: string = "localhost";
 let server = new net.Server();
 
 server.on('connection', async function (stream) {
-  stream.on('data', (data) => console.log(data));
+  let socket: MqttServerSocket = new MqttServerSocket();
+  await socket.init(stream);
 });
 
 server.listen(port);
