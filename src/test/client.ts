@@ -1,15 +1,13 @@
-import {MqttClientSocket} from "../socket/mqttclientsocket";
+import {MqttClientSocket} from "../socket/mqtt-client-socket";
 
-let client: MqttClientSocket;
+
 const port: number = 5555;
 const ip: string = "localhost";
 
-client = new MqttClientSocket(ip, port, "sdfdsfdsf", {keepalive: 5});
+let client: MqttClientSocket = new MqttClientSocket(ip, port, "sdfdsfdsf", {keepalive: 5});
 
-async function aa() {
+async function run(): Promise<void> {
   await client.connect();
-  client.publish("client publish info");
-  client.on("close", e => console.log("on close", e.message));
 }
 
-aa().then(() => {}, err => console.log(err.stack));
+run().then(suc => console.log("finish"), err => console.log(err.stack));

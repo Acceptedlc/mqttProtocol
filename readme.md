@@ -8,11 +8,7 @@
 	* clientId string
 	* opts MqttClientSocketOptions options
 * connect 连接mqtt server
-* message 
-	* close socket关闭
-* clientId 属性 这个socket的唯一表示
-* publish
-	* 
+
 
 	
 	

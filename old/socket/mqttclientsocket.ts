@@ -28,11 +28,10 @@ export class MqttClientSocket extends MqttBaseSocket {
     });
 
 
-    this.addTimer(TimerName.WaitConnect, 5, () => {
+    this.addTimer(TimerName.WaitConnect, this.opts.keepalive, () => {
       this.disConnect();
       connectFail(new Error(`mqttClientSocket connect timeout: ip=${this.ip}, port=${this.port}`));
     });
-
 
     this.socket_.on("connack", (packet: any) => {
       if (packet.returnCode !== 0) {
@@ -48,10 +47,11 @@ export class MqttClientSocket extends MqttBaseSocket {
     this.socket_.on("publish", this.onPublish.bind(this));
     this.socket_.on("pingresp", this.onPingresp.bind(this));
     this.socket_.on("disconnect", this.disConnect.bind(this, new Error("MqttClientSocket disconnect")));
-    this.socket_.on('close',  this.disConnect.bind(this, new Error("MqttClientSocket close")));
-    this.socket_.on('error',  this.disConnect.bind(this, new Error("MqttClientSocket error")));
+    this.socket_.on('close', this.disConnect.bind(this, new Error("MqttClientSocket close")));
+    this.socket_.on('error', this.disConnect.bind(this, new Error("MqttClientSocket error")));
     this.pingreq();
     await waiter;
+    console.log("sdfdsfsdf")
   }
 
   private readonly ip: string;
@@ -79,7 +79,7 @@ export interface MqttClientSocketOptions {
 }
 
 enum TimerName {
-  WaitConnect =  "WaitConnect",
+  WaitConnect = "WaitConnect",
   WaitPingresp = "WaitPingresp",
   NextPing = "NextPing"
 }

@@ -12,7 +12,7 @@ export class MqttBaseSocket extends EventEmitter {
   private messageId: number;
 
 
-  protected timers: any;
+  public timers: any;
 
   protected clearTimers(): void {
     for(let key in this.timers) {
