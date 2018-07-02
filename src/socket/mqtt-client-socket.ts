@@ -11,6 +11,7 @@ export class MqttClientSocket extends EventEmitter{
   private readonly opts: MqttClientSocketOptions;
   private connectReq: ClientConnectReq;
   private socket_: any;
+  private pingTimmer: NodeJS.Timer;
 
   public static error: any = console.log;
 
@@ -85,6 +86,16 @@ export class MqttClientSocket extends EventEmitter{
     }
     this.connectReq.handleResponse(packet);
     this.connectReq = null;
+  }
+
+  private startHeartbeat() {
+    this.pingTimmer = setImmediate(async () => {
+      
+    }, this.opts.keepalive);
+  }
+
+  private async ping(): Promise<void> {
+
   }
 
 }
