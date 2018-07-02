@@ -8,6 +8,11 @@
 	* clientId string
 	* opts MqttClientSocketOptions options
 * connect 连接mqtt server
+* close 关闭
+* event
+	* close socket关闭
+* static
+	* error 错误输出方法，默认console.log
 
 
 	
@@ -16,6 +21,6 @@
 
 * init 	
 	* socket socket或者websocket
-* message 
-	* close socket关闭
-* clientId 属性 这个socket的唯一表示
+* close 关闭socket 
+* static
+	* error 错误输出方法，默认console.log
