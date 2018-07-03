@@ -7,7 +7,9 @@ let client: MqttClientSocket = new MqttClientSocket(ip, port, "sdfdsfdsf", {keep
 
 async function run(): Promise<void> {
   client.on("close", (msg) => console.log("test client: ", msg));
+  client.on("publish", (msg) => console.log("test client", msg));
   await client.connect();
+  client.publish("sdfsdf", "sddsf");
 }
 
 run().then(suc => console.log("finish"), err => console.log(err.stack));

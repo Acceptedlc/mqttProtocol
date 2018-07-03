@@ -9,6 +9,7 @@ let server = new net.Server();
 server.on('connection', async function (stream) {
   let socket: MqttServerSocket = new MqttServerSocket();
   socket.on("close", (msg) => console.log(msg));
+  socket.on("publish", (msg) => console.log("test client", msg));
   await socket.init(stream);
 });
 

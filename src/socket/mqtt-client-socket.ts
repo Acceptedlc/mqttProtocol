@@ -44,6 +44,7 @@ export class MqttClientSocket extends EventEmitter {
     this.socket_ = mqttCon(stream);
     // 监听各种事件
     this.socket_.on("connack", this.onConnack.bind(this));
+    this.socket_.on("publish", this.onPublish.bind(this));
     this.socket_.on("pingresp", this.onPingresp.bind(this));
     this.socket_.on("close", this.onClose.bind(this, new Error("MqttClientSocket close event")));
     this.socket_.on("error", this.onClose.bind(this, new Error("MqttClientSocket error event")));
@@ -70,14 +71,24 @@ export class MqttClientSocket extends EventEmitter {
     this.startHeartbeat();
   }
 
+  public publish(payload: string, topic: string, qos: number = 0): void {
+    this.socket_.publish({topic, payload, qos});
+  }
+
 
   public close(): void {
-    this.socket_.destroy();
     if (this.connectReq) {
       this.connectReq.cancle();
     }
     if(this.pingReq) {
       this.pingReq.cancle();
+    }
+    if(this.pingTimmer) {
+      clearTimeout(this.pingTimmer);
+    }
+    if(this.socket_) {
+      this.socket_.destroy();
+      this.socket_ = null;
     }
   }
 
@@ -86,6 +97,9 @@ export class MqttClientSocket extends EventEmitter {
     this.close();
   }
 
+  private onPublish(packet: any): void {
+    this.emit("publish", packet.payload.toString());
+  }
 
   private onConnack(packet: any) {
     if (!this.connectReq) {
@@ -104,8 +118,9 @@ export class MqttClientSocket extends EventEmitter {
   }
 
   private startHeartbeat(): void {
-    setTimeout(() => {
+    this.pingTimmer = setTimeout(() => {
       this.ping().then(() => {
+        this.pingTimmer = null;
         this.startHeartbeat();
       }, err => {
         this.onClose(err);

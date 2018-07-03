@@ -24,6 +24,7 @@ export class MqttServerSocket extends EventEmitter{
 
     this.socket_.on("connect", this.onConnect.bind(this));
     this.socket_.on("pingreq", this.onPing.bind(this));
+    this.socket_.on("publish", this.onPublish.bind(this));
     this.socket_.on("close", this.onClose.bind(this, new Error("MqttClientSocket close event")));
     this.socket_.on("error", this.onClose.bind(this, new Error("MqttClientSocket error event")));
     this.socket_.on("disconnect", this.onClose.bind(this, new Error("MqttClientSocket disconnect event")));
@@ -46,13 +47,20 @@ export class MqttServerSocket extends EventEmitter{
   }
 
   public close(): void {
-    this.socket_.destroy();
     if(this.waitConnectPacket) {
       this.waitConnectPacket.cancle();
     }
     if(this.checkChanneltimer) {
       clearInterval(this.checkChanneltimer);
     }
+    if(this.socket_) {
+     this.socket_.destroy();
+     this.socket_ = null;
+    }
+  }
+
+  public publish(payload: string, topic: string, qos: number = 0): void {
+    this.socket_.publish({topic, payload, qos});
   }
 
   private onClose(e: Error) {
@@ -69,6 +77,10 @@ export class MqttServerSocket extends EventEmitter{
     temp.handleResponse(packet);
   }
 
+  private onPublish(packet: any): void {
+    this.emit("publish", packet.payload.toString());
+  }
+
   private onPing(packet: any): void {
     this.communicationTimestamp = Date.now();
     this.socket_.pingresp();
@@ -79,8 +91,8 @@ export class MqttServerSocket extends EventEmitter{
   }
 
   private checkTimeout() {
-    console.log(Date.now() - this.communicationTimestamp , this.keepalive);
     if(Date.now() - this.communicationTimestamp > this.keepalive) {
+      console.log("heartbeat timeout")
       this.onClose(new Error("MqttServerSocket wait ping timeout"));
     }
   }
