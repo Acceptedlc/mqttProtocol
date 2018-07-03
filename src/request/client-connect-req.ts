@@ -8,7 +8,7 @@ export class ClientConnectReq extends BaseReq{
     this.timeout = timeout;
   }
 
-  connect(socket: any, cb: (err: Error, data: string)=> void) {
+  connect(socket: any, cb: (err: Error, data: string)=> void): void {
     this.cb = cb;
     socket.connect({clientId: this.clientId, keepalive: this.keepalive});
     this.status = RequestStatus.Pendding;

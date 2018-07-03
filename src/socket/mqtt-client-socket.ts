@@ -1,15 +1,17 @@
 import * as net from "net";
 import {ClientConnectReq} from "../request/client-connect-req";
 import {EventEmitter} from "events";
+import {ClientPingReq} from "../request/client-ping-req";
 
 const mqttCon = require('mqtt-connection');
 
-export class MqttClientSocket extends EventEmitter{
+export class MqttClientSocket extends EventEmitter {
   private readonly ip: string;
   private readonly port: number;
   private readonly clientId: string;
   private readonly opts: MqttClientSocketOptions;
   private connectReq: ClientConnectReq;
+  private pingReq: ClientPingReq;
   private socket_: any;
   private pingTimmer: NodeJS.Timer;
 
@@ -30,6 +32,7 @@ export class MqttClientSocket extends EventEmitter{
     this.opts = opts;
     this.opts.keepalive = this.opts.keepalive * 1000;
     this.connectReq = null;
+    this.pingReq = null;
   }
 
   /**
@@ -39,19 +42,19 @@ export class MqttClientSocket extends EventEmitter{
   async connect(): Promise<void> {
     let stream = net.createConnection(this.port, this.ip);
     this.socket_ = mqttCon(stream);
-
     // 监听各种事件
     this.socket_.on("connack", this.onConnack.bind(this));
+    this.socket_.on("pingresp", this.onPingresp.bind(this));
     this.socket_.on("close", this.onClose.bind(this, new Error("MqttClientSocket close event")));
     this.socket_.on("error", this.onClose.bind(this, new Error("MqttClientSocket error event")));
     this.socket_.on("disconnect", this.onClose.bind(this, new Error("MqttClientSocket disconnect event")));
 
-    try{
+    try {
       //向broker发送connect包
       this.connectReq = new ClientConnectReq(this.clientId, this.opts.keepalive, this.opts.keepalive);
       await new Promise<any>((suc, fail) => {
         this.connectReq.connect(this.socket_, (err, data) => {
-          if(err) {
+          if (err) {
             fail(err)
           } else {
             suc(data);
@@ -62,40 +65,65 @@ export class MqttClientSocket extends EventEmitter{
       this.close();
       throw e;
     }
+
+    //开始心跳
+    this.startHeartbeat();
   }
 
 
   public close(): void {
     this.socket_.destroy();
-    if(this.connectReq) {
+    if (this.connectReq) {
       this.connectReq.cancle();
+    }
+    if(this.pingReq) {
+      this.pingReq.cancle();
     }
   }
 
   private onClose(e: Error): void {
+    this.emit("close", e.message);
     this.close();
-    MqttClientSocket.error(e.message);
-    this.emit(e.message);
   }
 
 
-
   private onConnack(packet: any) {
-    if(!this.connectReq) {
+    if (!this.connectReq) {
       return;
     }
     this.connectReq.handleResponse(packet);
     this.connectReq = null;
   }
 
-  private startHeartbeat() {
-    this.pingTimmer = setImmediate(async () => {
-      
+  private onPingresp(packet: any) {
+    if(!this.pingReq) {
+      return;
+    }
+    this.connectReq = null;
+    this.pingReq.handleResponse(packet);
+  }
+
+  private startHeartbeat(): void {
+    setTimeout(() => {
+      this.ping().then(() => {
+        this.startHeartbeat();
+      }, err => {
+        this.onClose(err);
+      })
     }, this.opts.keepalive);
   }
 
-  private async ping(): Promise<void> {
-
+  private ping(): Promise<void> {
+    this.pingReq = new ClientPingReq(this.opts.keepalive);
+    return new Promise<void>((suc, fail) => {
+        this.pingReq.ping(this.socket_, (err: Error, data: string) => {
+          if(err) {
+            fail(err);
+          } else {
+            suc();
+          }
+        })
+    });
   }
 
 }

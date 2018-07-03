@@ -9,6 +9,7 @@ export class MqttServerSocket extends EventEmitter{
   private socket_: any;
   private checkChanneltimer: NodeJS.Timer;
   private waitConnectPacket: ServerWaitConnectPacketReq;
+  private communicationTimestamp: number;
 
   public static error: any = console.log;
 
@@ -22,10 +23,11 @@ export class MqttServerSocket extends EventEmitter{
     this.socket_ = mqttCon(socket);
 
     this.socket_.on("connect", this.onConnect.bind(this));
+    this.socket_.on("pingreq", this.onPing.bind(this));
     this.socket_.on("close", this.onClose.bind(this, new Error("MqttClientSocket close event")));
     this.socket_.on("error", this.onClose.bind(this, new Error("MqttClientSocket error event")));
     this.socket_.on("disconnect", this.onClose.bind(this, new Error("MqttClientSocket disconnect event")));
-    //
+
     this.waitConnectPacket = new ServerWaitConnectPacketReq(5 * 1000);
     let packet: any = await new Promise((suc, fail) => {
       this.waitConnectPacket.wait((err, packet) => {
@@ -39,6 +41,8 @@ export class MqttServerSocket extends EventEmitter{
     this.keepalive = packet.keepalive;
     this.clientId = packet.clientId;
     this.sendConnack(0);
+    this.communicationTimestamp = Date.now();
+    this.checkChanneltimer = setInterval(() => this.checkTimeout(), this.keepalive * 1.5);
   }
 
   public close(): void {
@@ -53,8 +57,7 @@ export class MqttServerSocket extends EventEmitter{
 
   private onClose(e: Error) {
     this.close();
-    this.emit(e.message);
-    MqttServerSocket.error(e.message)
+    this.emit("close", e.message);
   }
 
   private onConnect(packet: any): void {
@@ -66,10 +69,20 @@ export class MqttServerSocket extends EventEmitter{
     temp.handleResponse(packet);
   }
 
+  private onPing(packet: any): void {
+    this.communicationTimestamp = Date.now();
+    this.socket_.pingresp();
+  }
+
   private sendConnack(returnCode: number) {
     this.socket_.connack({returnCode});
   }
 
-
+  private checkTimeout() {
+    console.log(Date.now() - this.communicationTimestamp , this.keepalive);
+    if(Date.now() - this.communicationTimestamp > this.keepalive) {
+      this.onClose(new Error("MqttServerSocket wait ping timeout"));
+    }
+  }
 
 }
