@@ -24,3 +24,5 @@
 * close 关闭socket 
 * static
 	* error 错误输出方法，默认console.log
+* event
+	* close socket关闭
